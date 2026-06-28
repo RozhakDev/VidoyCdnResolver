@@ -8,7 +8,7 @@ from rich.panel import Panel
 from rich.text import Text
 from typing_extensions import Annotated
 
-from src.vidoy_cdn_resolver import resolver
+from src.vidoy_cdn_resolver import resolver, downloader
 from src.vidoy_cdn_resolver.logging_config import setup_logging
 
 # Inisialisasi objek Typer dan Rich Console
@@ -48,6 +48,14 @@ def main(
             help="Tampilkan output mentah dalam format JSON.",
         ),
     ] = False,
+    download: Annotated[
+        bool,
+        typer.Option(
+            "--download",
+            "-d",
+            help="Unduh file video (MP4) secara otomatis setelah mendapatkan URL CDN.",
+        ),
+    ] = False,
 ):
     """
     Menjalankan resolver Vidoy melalui antarmuka CLI.
@@ -58,6 +66,7 @@ def main(
         url (str): URL halaman video yang ingin di-resolve.
         verbose (bool): Jika True, tampilkan log level DEBUG.
         raw (bool): Jika True, tampilkan hasil dalam format JSON mentah.
+        download (bool): Jika True, video CDN yang didapat akan langsung diunduh.
     """
     setup_logging(is_verbose=verbose)
 
@@ -79,10 +88,26 @@ def main(
             table.add_row("Judul", details.title or "Tidak ditemukan")
             table.add_row("Thumbnail", details.thumbnail_url or "Tidak ditemukan")
 
-            cdn_url_text = Text(details.cdn_url or "Tidak ditemukan", style="bold magenta")
+            display_cdn_url = details.cdn_url or "Tidak ditemukan"
+            if display_cdn_url != "Tidak ditemukan" and len(display_cdn_url) > 65:
+                display_cdn_url = display_cdn_url[:30] + "..." + display_cdn_url[-30:]
+                
+            cdn_url_text = Text(display_cdn_url, style="bold magenta")
             table.add_row("URL CDN", cdn_url_text)
 
             console.print(table)
+            
+        if download and details.cdn_url:
+            output_filename = f"{details.video_id}.mp4"
+            console.print(f"\n[bold yellow]Memulai unduhan ke '{output_filename}'...[/bold yellow]")
+            success = downloader.download_video(details.cdn_url, details.host_name, output_filename)
+            if success:
+                console.print(f"[bold green]✓ Unduhan '{output_filename}' berhasil![/bold green]")
+            else:
+                console.print("[bold red]✗ Gagal mengunduh video. Periksa log atau koneksi Anda.[/bold red]")
+        elif download and not details.cdn_url:
+            console.print("[bold red]✗ Tidak dapat mengunduh karena URL CDN tidak ditemukan![/bold red]")
+            
     except Exception as e:
         logger.exception("Terjadi kesalahan saat menjalankan proses resolve.")
         raise typer.Exit(code=1)

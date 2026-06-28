@@ -12,9 +12,19 @@ class VideoDetails:
     Berisi ID video dan metadata opsional seperti judul, thumbnail, dan URL CDN.
     """
     video_id: str
+    host_name: str
     title: Optional[str] = None
     thumbnail_url: Optional[str] = None
     cdn_url: Optional[str] = None
+
+def _extract_host_and_id(pattern, text: str) -> tuple[Optional[str], Optional[str]]:
+    """
+    Mengambil host name dan ID video dari teks.
+    """
+    match = pattern.search(text)
+    if match:
+        return match.group(1), match.group(2)
+    return None, None
 
 def _extract_match(pattern, text: str) -> Optional[str]:
     """
@@ -52,19 +62,19 @@ def resolve(page_url: str) -> VideoDetails:
     page_content = client.fetch_page_content(page_url)
     
     logger.info("Mencari ID video di dalam halaman...")
-    video_id = _extract_match(patterns.VIDEO_ID_PATTERN, page_content)
+    host_name, video_id = _extract_host_and_id(patterns.VIDEO_ID_PATTERN, page_content)
 
-    if not video_id:
-        logger.error("Ekstraksi ID video gagal.")
-        raise ValueError("Tidak dapat menemukan ID video di URL yang diberikan. "
+    if not video_id or not host_name:
+        logger.error("Ekstraksi ID video atau Host Name gagal.")
+        raise ValueError("Tidak dapat menemukan ID video atau Host Name di URL yang diberikan. "
                          "Pastikan URL valid dan halaman berisi video.")
     
-    logger.info(f"ID video ditemukan: {video_id}")
+    logger.info(f"ID video ditemukan: {video_id} pada host {host_name}")
 
-    details = VideoDetails(video_id=video_id)
+    details = VideoDetails(video_id=video_id, host_name=host_name)
 
     logger.info("Mengambil detail embed...")
-    embed_content = client.fetch_embed_details(video_id)
+    embed_content = client.fetch_embed_details(video_id, host_name)
 
     logger.info("Mengekstrak judul, thumbnail, dan URL CDN...")
     details.title = _extract_match(patterns.TITLE_PATTERN, embed_content)

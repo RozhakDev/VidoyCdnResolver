@@ -29,13 +29,14 @@ def fetch_page_content(url: str) -> str:
         logger.error(f"Gagal mengambil halaman dari {url}: {e}")
         raise requests.exceptions.RequestException(f"Gagal mengambil halaman dari {url}: {e}") from e
 
-def fetch_embed_details(video_id: str) -> str:
+def fetch_embed_details(video_id: str, host_name: str) -> str:
     """
     Mengambil konten halaman embed berdasarkan ID video.
     Fungsi ini mengakses endpoint internal Vidoy untuk mendapatkan metadata video.
 
     Args:
         video_id (str): ID unik dari video yang diminta.
+        host_name (str): Nama host tempat video tersebut berada.
 
     Returns:
         str: Konten teks dari halaman embed.
@@ -47,9 +48,9 @@ def fetch_embed_details(video_id: str) -> str:
     logger.debug(f"Mengambil detail embed untuk ID video: {video_id}")
     try:
         response = requests.get(
-            config.EMBED_URL,
+            config.get_embed_url(host_name),
             params=params,
-            headers=config.EMBED_HEADERS,
+            headers=config.get_embed_headers(host_name),
             timeout=30
         )
         response.raise_for_status()
