@@ -2,7 +2,7 @@
 
 A smart, terminal-based downloader for Vidoy pages. Resolves CDN links dynamically and streams MP4 videos directly to your disk with a beautiful, distraction-free UI.
 
-## ✨ Features
+## Features
 
 - **Auto-Download** (`-d` / `--download`) videos to `.mp4` with a beautiful streaming progress bar
 - Resolve **video ID**, **title**, **thumbnail**, and **direct CDN URL**
@@ -11,22 +11,29 @@ A smart, terminal-based downloader for Vidoy pages. Resolves CDN links dynamical
 - Beautiful terminal output using **Rich** (automatically crops excessively long URLs)
 - Optional **debug logging** and **raw JSON output**
 
-## 📦 Installation
+## Installation
 
-```bash
-pip install -r requirements.txt
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/RozhakDev/VidoyCdnResolver.git
+   cd VidoyCdnResolver
+   ```
 
-## 🚀 Usage
+2. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Usage
 
 | Command | Description |
 |--------|------------|
+| `python main.py <PAGE_URL> --raw` | Output mentah dalam format JSON |
 | `python main.py <PAGE_URL>` | Resolve video page dan tampilkan hasil dengan Rich table |
 | `python main.py <PAGE_URL> -d` | **Unduh** video CDN secara otomatis dan simpan sebagai `.mp4` |
 | `python main.py <PAGE_URL> -v` | Tampilkan verbose debug logs |
-| `python main.py <PAGE_URL> --raw` | Output mentah dalam format JSON |
 
-## 🖥 Example Output
+## Example Output
 
 With debug enabled:
 
@@ -43,7 +50,7 @@ Result:
 
 See [`/screenshot/successful-resolve-with-debug-logs.png`](/screenshot/successful-resolve-with-debug-logs.png) for a full example.
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 VidoyCdnResolver/
@@ -54,10 +61,10 @@ VidoyCdnResolver/
 └── src/
 ```
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 This project is for **educational and research purposes only**. Use responsibly and respect the terms of service of the platform.
 
-## 📄 License
+## License
 
 MIT License

@@ -1,15 +1,18 @@
 import logging
+import re
 from dataclasses import dataclass
 from typing import Optional
-from . import client, patterns
+from . import client
 
 logger = logging.getLogger(__name__)
 
 @dataclass
 class VideoDetails:
     """
-    Menyimpan informasi lengkap tentang video Vidoy.
-    Berisi ID video dan metadata opsional seperti judul, thumbnail, dan URL CDN.
+    Menyimpan ringkasan informasi video.
+
+    Struktur ini memuat ID, host, judul, thumbnail, dan URL CDN
+    agar hasil resolusi mudah dipakai kembali.
     """
     video_id: str
     host_name: str
@@ -17,73 +20,49 @@ class VideoDetails:
     thumbnail_url: Optional[str] = None
     cdn_url: Optional[str] = None
 
-def _extract_host_and_id(pattern, text: str) -> tuple[Optional[str], Optional[str]]:
-    """
-    Mengambil host name dan ID video dari teks.
-    """
-    match = pattern.search(text)
-    if match:
-        return match.group(1), match.group(2)
-    return None, None
-
-def _extract_match(pattern, text: str) -> Optional[str]:
-    """
-    Mengambil teks yang cocok dari hasil pencarian pola regex.
-    Fungsi ini mencari kecocokan pertama dalam teks dan mengembalikan
-    kelompok pertama jika ditemukan.
-
-    Args:
-        pattern (re.Pattern): Pola regex yang telah dikompilasi.
-        text (str): Teks yang akan dicari kecocokannya.
-
-    Returns:
-        Optional[str]: Hasil ekstraksi jika ditemukan, None jika tidak.
-    """
-    match = pattern.search(text)
-    return match.group(1) if match else None
-
 def resolve(page_url: str) -> VideoDetails:
     """
-    Menyelesaikan URL Vidoy menjadi detail video lengkap.
-    Fungsi ini mengambil halaman awal, mengekstrak ID video, lalu mengambil
-    informasi tambahan seperti judul, thumbnail, dan URL CDN dari halaman embed.
+    Menjalankan alur resolusi dari URL video.
+
+    Fungsi ini membaca halaman target, mengambil detail penting,
+    lalu menyusun hasil akhirnya dalam bentuk yang rapi.
 
     Args:
-        page_url (str): URL halaman video asli yang akan di-resolve.
+        page_url (str): Tautan halaman video yang dituju.
 
     Returns:
-        VideoDetails: Objek berisi ID video dan informasi terkait lainnya.
+        VideoDetails: Data video yang sudah dirangkum.
 
     Raises:
-        ValueError: Jika ID video tidak ditemukan di halaman.
-        requests.exceptions.RequestException: Jika terjadi error jaringan.
+        ValueError: Jika URL tidak valid atau proses penemuan data gagal.
+        Exception: Jika terjadi kesalahan teknis yang tidak terduga.
     """
-    logger.info("Memulai proses resolve untuk URL...")
-    page_content = client.fetch_page_content(page_url)
+    logger.info("Menginisialisasi urutan resolusi untuk URL target...")
     
-    logger.info("Mencari ID video di dalam halaman...")
-    host_name, video_id = _extract_host_and_id(patterns.VIDEO_ID_PATTERN, page_content)
-
-    if not video_id or not host_name:
-        logger.error("Ekstraksi ID video atau Host Name gagal.")
-        raise ValueError("Tidak dapat menemukan ID video atau Host Name di URL yang diberikan. "
-                         "Pastikan URL valid dan halaman berisi video.")
+    host_name_match = re.search(r'https?://([^/]+)/', page_url)
+    if not host_name_match:
+        raise ValueError("Nama host terdeteksi tidak valid pada URL yang diberikan.")
+    host_name = host_name_match.group(1)
     
-    logger.info(f"ID video ditemukan: {video_id} pada host {host_name}")
+    video_id_match = re.search(r'/[ed]/([a-zA-Z0-9_-]+)', page_url)
+    video_id = video_id_match.group(1) if video_id_match else "unknown"
 
+    logger.debug(f"Host Target: {host_name} | ID Target: {video_id}")
+    
     details = VideoDetails(video_id=video_id, host_name=host_name)
-
-    logger.info("Mengambil detail embed...")
-    embed_content = client.fetch_embed_details(video_id, host_name)
-
-    logger.info("Mengekstrak judul, thumbnail, dan URL CDN...")
-    details.title = _extract_match(patterns.TITLE_PATTERN, embed_content)
-    details.thumbnail_url = _extract_match(patterns.POSTER_PATTERN, embed_content)
-    details.cdn_url = _extract_match(patterns.SOURCE_PATTERN, embed_content).replace('amp;', '')
-
-    logger.debug(f"Judul: {details.title}")
-    logger.debug(f"Thumbnail: {details.thumbnail_url}")
-    logger.debug(f"CDN URL: {details.cdn_url}")
-    logger.info("Proses resolve selesai.")
+    
+    try:
+        vidoy_client = client.VidoyClient()
+        
+        iframe_src, iframeid, embedToken = vidoy_client.fetch_initial_details(page_url, host_name)
+        playerPath, iframe_url = vidoy_client.fetch_player_path(iframe_src, iframeid, embedToken, page_url, host_name)
+        embed_url = vidoy_client.fetch_embed_url(playerPath, iframe_url)
+        
+        details.cdn_url = embed_url
+        logger.info("Proses resolusi diselesaikan dengan sukses.")
+        
+    except Exception as e:
+        logger.error(f"Urutan resolusi mengalami kegagalan: {e}")
+        raise
 
     return details

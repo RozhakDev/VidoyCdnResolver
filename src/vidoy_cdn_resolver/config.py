@@ -1,64 +1,60 @@
-# User-Agent yang akan digunakan untuk semua permintaan HTTP.
 USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Linux; Android 13; Infinix X6831 Build/TP1A.220624.014) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.7871.46 Mobile Safari/537.36"
 )
 
-# Header default untuk permintaan HTTP.
-BASE_HEADERS = {
-    "User-Agent": USER_AGENT,
-}
-
-def get_embed_url(host_name: str) -> str:
+def get_initial_headers(host_name: str) -> dict:
     """
-    Menghasilkan URL lengkap untuk mengakses halaman embed berdasarkan nama host.
+    Menyiapkan header awal untuk permintaan halaman video.
+
+    Fungsi ini menyusun header dasar agar permintaan ke server
+    terlihat wajar dan dapat diproses dengan baik.
 
     Args:
-        host_name (str): Nama host yang didapatkan dari URL sumber.
+        host_name (str): Nama domain target untuk disematkan di header.
 
     Returns:
-        str: URL tujuan untuk halaman embed video.
-    """
-    return f"https://{host_name}/embed.php"
-
-def get_embed_headers(host_name: str) -> dict:
-    """
-    Merakit header HTTP khusus untuk permintaan ke halaman embed.
-
-    Args:
-        host_name (str): Nama host yang didapatkan dari URL sumber.
-
-    Returns:
-        dict: Kumpulan header HTTP yang dibutuhkan.
+        dict: Header awal yang siap dipakai.
     """
     return {
-        "User-Agent": USER_AGENT,
-        "Referer": f"https://{host_name}/",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Encoding": "gzip, deflate",
+        "accept-language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Connection": "keep-alive",
+        "dnt": "1",
         "Host": host_name,
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
+        "User-Agent": USER_AGENT,
     }
 
-def get_download_headers(host_name: str) -> dict:
+def get_download_headers(host_name: str, referer_host: str) -> dict:
     """
-    Menyiapkan header HTTP yang diperlukan untuk mengunduh media dari CDN.
+    Menyiapkan header untuk proses pengunduhan media.
+
+    Fungsi ini menambahkan referer dan pengaturan lain yang dibutuhkan
+    agar server CDN menerima permintaan unduhan.
 
     Args:
-        host_name (str): Nama host sumber untuk dijadikan sebagai referer.
+        host_name (str): Nama domain target dari CDN.
+        referer_host (str): Nama domain referer asal.
 
     Returns:
-        dict: Konfigurasi header lengkap untuk pengunduhan.
+        dict: Header unduhan yang siap digunakan.
     """
     return {
+        "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Sec-Fetch-Storage-Access": "active",
         "Accept-Encoding": "identity;q=1, *;q=0",
-        "Accept-Language": "en-US,en;q=0.6",
+        "Referer": f"https://{referer_host}/",
         "Connection": "keep-alive",
-        "Host": "vidoycdn.b-cdn.net",
-        "Range": "bytes=0-",
-        "Referer": f"https://{host_name}/",
-        "Sec-Fetch-Dest": "video",
+        "Host": host_name,
         "Sec-Fetch-Mode": "no-cors",
         "Accept": "*/*",
+        "Range": "bytes=0-",
+        "Sec-Fetch-Dest": "video",
         "Sec-Fetch-Site": "cross-site",
-        "Sec-GPC": "1",
         "User-Agent": USER_AGENT,
-        "Sec-Fetch-Storage-Access": "none",
     }
