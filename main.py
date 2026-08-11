@@ -103,7 +103,8 @@ def main(
         if download and details.cdn_url:
             output_filename = f"{details.video_id}.mp4"
             console.print(f"\n[bold yellow]Memulai urutan pengunduhan aliran media -> '{output_filename}'[/bold yellow]")
-            success = downloader.download_video(details.cdn_url, details.host_name, output_filename)
+            referer_host = details.actual_host or details.host_name
+            success = downloader.download_video(details.cdn_url, referer_host, output_filename)
             if success:
                 console.print(f"[bold green]✓ Aliran media berhasil ditulis ke '{output_filename}'[/bold green]")
             else:

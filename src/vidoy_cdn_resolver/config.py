@@ -1,5 +1,5 @@
 USER_AGENT = (
-    "Mozilla/5.0 (Linux; Android 13; Infinix X6831 Build/TP1A.220624.014) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.7871.46 Mobile Safari/537.36"
+    "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
 )
 
 def get_initial_headers(host_name: str) -> dict:
@@ -45,16 +45,16 @@ def get_download_headers(host_name: str, referer_host: str) -> dict:
         dict: Header unduhan yang siap digunakan.
     """
     return {
-        "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Sec-Fetch-Storage-Access": "active",
+        "Accept": "*/*",
+        "Accept-Language": "id,id-ID;q=0.9,en-US;q=0.8,en;q=0.7",
         "Accept-Encoding": "identity;q=1, *;q=0",
         "Referer": f"https://{referer_host}/",
         "Connection": "keep-alive",
         "Host": host_name,
-        "Sec-Fetch-Mode": "no-cors",
-        "Accept": "*/*",
         "Range": "bytes=0-",
-        "Sec-Fetch-Dest": "video",
         "Sec-Fetch-Site": "cross-site",
+        "Sec-Fetch-Dest": "video",
+        "Sec-Fetch-Mode": "no-cors",
         "User-Agent": USER_AGENT,
+        "Sec-Fetch-Storage-Access": "active",
     }

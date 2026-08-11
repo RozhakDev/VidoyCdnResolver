@@ -16,6 +16,7 @@ class VideoDetails:
     """
     video_id: str
     host_name: str
+    actual_host: Optional[str] = None
     title: Optional[str] = None
     thumbnail_url: Optional[str] = None
     cdn_url: Optional[str] = None
@@ -54,7 +55,8 @@ def resolve(page_url: str) -> VideoDetails:
     try:
         vidoy_client = client.VidoyClient()
         
-        iframe_src, iframeid, embedToken = vidoy_client.fetch_initial_details(page_url, host_name)
+        iframe_src, iframeid, embedToken, page_url, host_name = vidoy_client.fetch_initial_details(page_url, host_name)
+        details.actual_host = host_name  # host setelah mengikuti redirect JS
         playerPath, iframe_url = vidoy_client.fetch_player_path(iframe_src, iframeid, embedToken, page_url, host_name)
         embed_url = vidoy_client.fetch_embed_url(playerPath, iframe_url)
         
