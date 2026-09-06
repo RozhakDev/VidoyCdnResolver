@@ -48,7 +48,7 @@ class VidoyClient:
         response = self.session.get(video_url, timeout=30)
         response.raise_for_status()
 
-        response, video_url, host_name = self._follow_js_redirect(response, host_name)
+        response, video_url, host_name = self._follow_js_redirect(response, host_name, video_url)
 
         logger.debug(f"Kuki terkumpul: {self.session.cookies.get_dict()}")
 
@@ -66,7 +66,7 @@ class VidoyClient:
 
         return iframe_src, iframeid, embedToken, video_url, host_name
 
-    def _follow_js_redirect(self, response, host_name: str, max_hops: int = 5):
+    def _follow_js_redirect(self, response, host_name: str, video_url: str, max_hops: int = 5):
         """
         Mengikuti rantai redirect berbasis JavaScript (setTimeout / window.location.href).
 
@@ -78,6 +78,7 @@ class VidoyClient:
         Args:
             response: Objek respons HTTP awal.
             host_name (str): Nama host saat ini.
+            video_url (str): URL video saat ini (akan diperbarui jika ada redirect).
             max_hops (int): Batas maksimum langkah redirect agar tidak loop.
 
         Returns:
@@ -106,7 +107,6 @@ class VidoyClient:
             response = self.session.get(redirect_url, timeout=30)
             response.raise_for_status()
             host_name = new_host
-            
             video_url = redirect_url
         else:
             logger.warning("Batas maksimum redirect JS tercapai. Melanjutkan dengan respons terakhir.")
