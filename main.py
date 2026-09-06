@@ -1,21 +1,21 @@
+import json
 import logging
 import sys
+from dataclasses import asdict
 from pathlib import Path
+
+import typer
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+from typing_extensions import Annotated
 
 _PROJECT_ROOT = Path(__file__).absolute().parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-import typer
-import json
-from dataclasses import asdict
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
-from typing_extensions import Annotated
-
-from src.vidoy_cdn_resolver import resolver, downloader
+from src.vidoy_cdn_resolver import downloader, resolver
 from src.vidoy_cdn_resolver.logging_config import setup_logging
 
 app = typer.Typer(
@@ -109,18 +109,18 @@ def main(
             
         if download and details.cdn_url:
             output_filename = f"{details.video_id}.mp4"
-            console.print(f"\n[bold yellow]Memulai urutan pengunduhan aliran media -> '{output_filename}'[/bold yellow]")
+            console.print(f"\n[bold yellow]Info: Memulai proses unduhan ke '{output_filename}'[/bold yellow]")
             referer_host = details.actual_host or details.host_name
             success = downloader.download_video(details.cdn_url, referer_host, output_filename)
             if success:
-                console.print(f"[bold green]✓ Aliran media berhasil ditulis ke '{output_filename}'[/bold green]")
+                console.print(f"[bold green]Sukses: File berhasil disimpan ke '{output_filename}'[/bold green]")
             else:
-                console.print("[bold red]✗ Pengunduhan aliran gagal. Silakan tinjau log sistem.[/bold red]")
+                console.print("[bold red]Error: Gagal mengunduh file. Periksa log sistem untuk detail lebih lanjut.[/bold red]")
         elif download and not details.cdn_url:
-            console.print("[bold red]✗ Urutan pengunduhan dibatalkan: Tidak ada aliran CDN yang tersedia.[/bold red]")
+            console.print("[bold red]Dibatalkan: URL CDN tidak ditemukan, proses unduhan dihentikan.[/bold red]")
             
     except Exception as e:
-        logger.exception("Kesalahan kritis ditemui selama proses resolusi berjalan.")
+        logger.exception("Terjadi sistem error saat melakukan resolusi URL target.")
         raise typer.Exit(code=1)
 
 if __name__ == "__main__":

@@ -38,7 +38,7 @@ def resolve(page_url: str) -> VideoDetails:
         ValueError: Jika URL tidak valid atau proses penemuan data gagal.
         Exception: Jika terjadi kesalahan teknis yang tidak terduga.
     """
-    logger.info("Menginisialisasi urutan resolusi untuk URL target...")
+    logger.info("Memulai resolusi URL...")
     
     host_name_match = re.search(r'https?://([^/]+)/', page_url)
     if not host_name_match:
@@ -61,10 +61,10 @@ def resolve(page_url: str) -> VideoDetails:
         embed_url = vidoy_client.fetch_embed_url(playerPath, iframe_url)
         
         details.cdn_url = embed_url
-        logger.info("Proses resolusi diselesaikan dengan sukses.")
+        logger.info("Resolusi URL berhasil.")
         
     except Exception as e:
-        logger.error(f"Urutan resolusi mengalami kegagalan: {e}")
+        logger.error(f"Resolusi URL gagal: {e}")
         raise
 
     return details

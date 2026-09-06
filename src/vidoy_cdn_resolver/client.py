@@ -43,14 +43,14 @@ class VidoyClient:
             ValueError: Jika detail gagal ditemukan di halaman.
             requests.exceptions.RequestException: Jika koneksi internet terputus.
         """
-        logger.info(f"Membangun sesi kuki untuk host {host_name}...")
+        logger.info(f"Memulai sesi HTTP ke {host_name}")
         self.session.headers.update(config.get_initial_headers(host_name))
         response = self.session.get(video_url, timeout=30)
         response.raise_for_status()
 
         response, video_url, host_name = self._follow_js_redirect(response, host_name, video_url)
 
-        logger.debug(f"Kuki terkumpul: {self.session.cookies.get_dict()}")
+        logger.debug(f"Session cookies: {self.session.cookies.get_dict()}")
 
         iframe_src_match = re.search(r"iframe\.src\s*=\s*'/([^']+)\?id='", response.text)
         iframe_src = iframe_src_match.group(1) if iframe_src_match else None
@@ -101,7 +101,7 @@ class VidoyClient:
 
             redirect_url = js_redirect_match.group(1)
             new_host = urlparse(redirect_url).netloc
-            logger.debug(f"Redirect JS terdeteksi (hop {hop + 1}): {redirect_url}")
+            logger.debug(f"JS redirect (hop {hop + 1}) menuju: {redirect_url}")
 
             self.session.headers.update(config.get_initial_headers(new_host))
             response = self.session.get(redirect_url, timeout=30)
@@ -109,7 +109,7 @@ class VidoyClient:
             host_name = new_host
             video_url = redirect_url
         else:
-            logger.warning("Batas maksimum redirect JS tercapai. Melanjutkan dengan respons terakhir.")
+            logger.warning("Batas maksimal JS redirect tercapai. Menggunakan respons HTTP terakhir.")
 
         return response, video_url, host_name
 
@@ -134,7 +134,7 @@ class VidoyClient:
             ValueError: Jika path pemutar tidak ditemukan.
             requests.exceptions.RequestException: Jika koneksi internet terputus.
         """
-        logger.info("Mengambil metadata iframe melalui sesi terotorisasi...")
+        logger.info("Mengekstrak metadata video dari iframe.")
         cookie_string = "; ".join([f"{k}={v}" for k, v in self.session.cookies.get_dict().items()])
         self.session.headers.update({
             "Cookie": cookie_string,
@@ -172,7 +172,7 @@ class VidoyClient:
             ValueError: Jika tautan tidak berhasil ditemukan.
             requests.exceptions.RequestException: Jika koneksi internet terputus.
         """
-        logger.info("Mengekstraksi aliran media CDN mentah...")
+        logger.info("Mengekstrak URL aliran stream CDN.")
         self.session.headers.update({
             "Referer": iframe_url,
             "Sec-Fetch-Mode": "no-cors",
